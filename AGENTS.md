@@ -2,7 +2,7 @@
 
 This repo is an oyun-team game template, or a game made from one. Games made from it are published on the oyun-team game site (https://games.selimhantokat.com) and play on phones and computers inside a sandboxed frame.
 
-The README is for humans (Turkish first, English below). This file is for AI coding agents. Read it all before changing anything, and read section 2 before any move, transfer or hand-in.
+The README is for humans (Turkish first, English below). This file is for AI coding agents. Read it all before changing anything, and read section 2 before any move, transfer or hand-in. Every game repo must be named `<maker>-<game>` (for example `berfin_toprak-gece_lambasi`): a strict rule, see 2.9.
 
 The people using this template are often not developers. Explain what you do in plain words, and ask before anything that changes a GitHub account or repo settings.
 
@@ -46,6 +46,7 @@ Everything below is true for this repo's `.github/workflows/publish.yml` and the
 
 ### 2.2 Rules for agents
 
+- Every game repo name must follow 2.9 (`<maker>-<game>`, for example `berfin_toprak-gece_lambasi`). This is strict.
 - **Ask the human before** transferring, renaming, deleting, archiving, changing visibility, or creating a repo. These are GitHub account actions that are hard to undo. Explain what will happen in one or two plain sentences; the human may not be a developer.
 - Never edit `.github/workflows/publish.yml`, `scripts/check.mjs` or the SDK files (`oyun-sdk.js`, and `oyun.gd` in Godot) to "make it pass". If they are missing or broken, copy them unchanged from the template (2.5, route G).
 - Never force-push or rewrite history on a repo inside `oyun-team`.
@@ -71,7 +72,7 @@ If the GitHub CLI is installed and signed in, this answers most questions at onc
 gh repo view --json nameWithOwner,visibility,isFork,isTemplate,defaultBranchRef,parent
 ```
 
-Also check `game.json`: `slug` must be the game's own (not the template example), `author` must be a nickname (not `takma-adin`). `check.mjs` catches both.
+Check that the repo name follows 2.9 (`<maker>-<game>`). Also check `game.json`: `slug` must be the game's own (not the template example), `author` must be a nickname (not `takma-adin`). `check.mjs` catches both.
 
 ### 2.4 Pick the route
 
@@ -112,7 +113,7 @@ The site owner (an owner of `oyun-team`) picks one of these. Tell the human whic
 
 Use for forks, repos outside GitHub, name clashes, or when a transfer is not possible.
 
-1. Someone with rights in `oyun-team` creates the repo: **github.com/new** → Owner **oyun-team** → a repo name (lowercase with dashes, usually the slug) → Private or Public → **leave "Add a README", .gitignore and license all off**. It must be completely empty.
+1. Someone with rights in `oyun-team` creates the repo: **github.com/new** → Owner **oyun-team** → a repo name that follows 2.9 (`<maker>-<game>`, for example `berfin_toprak-gece_lambasi`) → Private or Public → **leave "Add a README", .gitignore and license all off**. It must be completely empty.
 2. Do **not** create it with "Use this template": that makes a new first commit, and pushing the game on top of it fails.
 3. In the game folder:
 
@@ -186,7 +187,7 @@ The repo needs these, copied unchanged from the matching template (the one named
 ### 2.7 Situations to know
 
 - **Branch is `master` or something else.** Only `main` publishes. On GitHub: **Settings → General → Default branch**, click the pencil and rename it to `main`. Then locally: `git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a`.
-- **Repo name vs slug.** The repo name can be anything; the game's address is `/oyun/<slug>` from `game.json`. Matching them is just tidy.
+- **Repo name vs slug.** The repo name must follow 2.9 (`<maker>-<game>`); the game's address is `/oyun/<slug>` from `game.json`. They differ on purpose: `berfin_toprak-gece_lambasi` publishes the slug `gece-lambasi`.
 - **Renaming the repo.** Before the first publish: fine, any time. **After** the first publish: don't. The site remembers the old full name, so the next run fails with `slug "x" is already used by another game`. To fix: rename it back, or ask the site owner to update the stored repo name.
 - **Changing the slug.** Before the first publish: fine. After: refused with `this repo already published as "x"`. Put the old slug back, or ask the site owner.
 - **Same game in two repos.** Only the first one to publish owns the slug. Pick one repo and push only there.
@@ -218,6 +219,20 @@ The repo needs these, copied unchanged from the matching template (the one named
 | Publish: `index.html is missing from the zip root` / `thumbnail ... is not in the game folder` | Wrong folder layout or thumbnail path | Fix `game.json` `dir` / `thumbnail` |
 | Publish: `invalid token`, connection errors, 5xx | The site is down or busy | Wait, then **Run workflow** again; if it keeps failing, tell the site owner |
 | `"status": "waiting for approval"` for a long time | Normal for a first release | The site owner approves it on `/admin` |
+
+### 2.9 Repo name: a strict rule
+
+Every game repo is named **`<maker>-<game>`**, so anyone can see who made which game. Example: Berfin Toprak's game Gece Lambası lives in `berfin_toprak-gece_lambasi`, not `gece_lambasi`.
+
+- `<maker>` is the maker's first and last name. `<game>` is the game's name.
+- Lowercase only. Turkish letters become plain ones: ç→c, ğ→g, ı→i, İ→i, ö→o, ş→s, ü→u. Drop apostrophes and other punctuation.
+- A space inside the maker part or the game part becomes `_`. There is exactly one `-`, between the maker and the game.
+- Allowed characters: `a-z`, `0-9`, `_` and that one `-`. As a pattern: `^[a-z0-9]+(_[a-z0-9]+)*-[a-z0-9]+(_[a-z0-9]+)*$`.
+- This applies to every new game repo, in a personal account or in `oyun-team`. Set it when creating the repo (**Use this template → Repository name**, or **github.com/new** in route C), so it never needs renaming.
+- The repo name is not the slug. The slug in `game.json` stays short with dashes (`gece-lambasi`) and is the game's address on the site. The repo name is only shown to the site owner.
+- A repo with a wrong name that has **never published**: rename it before moving it (**Settings → General → Repository name**; ask the human first, 2.2).
+- A repo with a wrong name that has **already published**: don't rename it. Renaming stops publishing until the site owner updates the stored repo name (2.7). Tell the human; the site owner decides.
+- Agents: whenever you create a repo, or tell a human what name to type, check it against this rule first. Don't move a game whose repo name breaks it without asking the human to fix the name.
 
 ## 3. Phaser (2D): notes for moving
 
