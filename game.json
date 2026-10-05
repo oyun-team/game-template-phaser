@@ -1,0 +1,15 @@
+{
+  "slug": "yildiz-yakala",
+  "title": { "tr": "Yıldız Yakala", "en": "Catch the Stars" },
+  "description": {
+    "tr": "Sepeti sürükle, yıldızları yakala, bombalardan kaç.",
+    "en": "Drag the basket, catch the stars, dodge the bombs."
+  },
+  "author": "takma-adin",
+  "category": "arcade",
+  "orientation": "portrait",
+  "scores": true,
+  "languages": ["tr", "en"],
+  "thumbnail": "thumbnail.svg",
+  "dir": "game"
+}

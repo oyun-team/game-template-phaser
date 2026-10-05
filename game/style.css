@@ -1,0 +1,11 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #1b1730;
+  touch-action: none;          /* stop the page from scrolling or zooming while playing */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+canvas { display: block; }
