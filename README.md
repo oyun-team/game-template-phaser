@@ -49,7 +49,9 @@ Skor kullanmıyorsan `game.json`'da `"scores": false` yap.
 ## Teslim
 Oyun bitince repoyu asistanına transfer et (**Settings → Danger Zone → Transfer**). Repo `oyun-team` organizasyonuna taşındıktan sonra, `main`'e her push oyunu otomatik yayınlar. İlk yayın asistan onayladıktan sonra görünür.
 
-Transfer yapamıyorsan, oyun bir fork ise, dal adı `main` değilse ya da taşıdıktan sonra **Publish** adımı "skipped" görünüyorsa: [AGENTS.md](AGENTS.md) dosyasının 2. bölümü her durumu adım adım anlatır. Bir yapay zekâ kod asistanı kullanıyorsan ona "AGENTS.md'ye göre oyunu oyun-team'e taşı" demen yeterli.
+Yayın sonucunu GitHub'da son commit'in yanındaki işarette görürsün: ✓ ya da ✗ (**oyun-team / yayın**; üzerine gelince mesajı okunur). GitHub Actions kullanılmaz; site her push'u kendisi alır.
+
+Transfer yapamıyorsan, oyun bir fork ise, dal adı `main` değilse ya da push'tan sonra işaret çıkmıyorsa: [AGENTS.md](AGENTS.md) dosyasının 2. bölümü her durumu adım adım anlatır. Bir yapay zekâ kod asistanı kullanıyorsan ona "AGENTS.md'ye göre oyunu oyun-team'e taşı" demen yeterli.
 
 ---
 
@@ -67,4 +69,4 @@ Games made from this template are published on the Oyun Team site. They must wor
 
 **Rules:** everything inside `game/`, no external files, 60 MB max, playable with touch, nothing inappropriate.
 
-**Handing in:** transfer the repo to your TA. Once it is in `oyun-team`, every push to `main` publishes automatically; the first release appears after the TA approves it. If you can't transfer, the repo is a fork, the branch isn't `main`, or **Publish** shows as skipped after the move, section 2 of [AGENTS.md](AGENTS.md) covers every case step by step; an AI coding assistant can follow it for you ("move this game into oyun-team following AGENTS.md").
+**Handing in:** transfer the repo to your TA. Once it is in `oyun-team`, every push to `main` publishes automatically; the first release appears after the TA approves it. The result shows as a ✓ or ✗ (**oyun-team / yayın**) next to the latest commit on GitHub; no GitHub Actions run, the site picks up each push itself. If you can't transfer, the repo is a fork, the branch isn't `main`, or no mark appears after a push, section 2 of [AGENTS.md](AGENTS.md) covers every case step by step; an AI coding assistant can follow it for you ("move this game into oyun-team following AGENTS.md").
