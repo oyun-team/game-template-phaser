@@ -11,5 +11,15 @@
   "scores": true,
   "languages": ["tr", "en"],
   "thumbnail": "thumbnail.svg",
+  "age": 7,
+  "audience": {
+    "tr": "Kısa ve renkli bir oyun isteyen her yaştan oyuncu için.",
+    "en": "Players of any age who want a short, colourful game."
+  },
+  "benefits": {
+    "tr": "El-göz koordinasyonunu ve dikkati çalıştırır.",
+    "en": "Practises hand-eye coordination and focus."
+  },
+  "skills": ["coordination", "focus", "reflexes"],
   "dir": "game"
 }
