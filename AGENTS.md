@@ -14,7 +14,7 @@ Template: https://github.com/oyun-team/game-template-phaser (example game: Yıld
 - `game/`: the whole game. `game/index.html` is required. `game/main.js` is the example game; replace it. Images and sounds go in `game/assets/`.
 - `game/phaser.min.js`: Phaser 4.2.1, included in the repo. Don't edit it or swap it for a CDN link.
 - `game/oyun-sdk.js`: the site SDK. Don't edit it; load it in `index.html` before the game code.
-- `scripts/check.mjs`, `.github/workflows/publish.yml`: checking and publishing. Don't edit them.
+- `scripts/check.mjs`: the same checks the site runs before publishing. Don't edit it. There is no GitHub Actions workflow: the site publishes each push to `main` itself (section 2).
 
 - Test: `npx serve game`, then open the address it prints. Opened outside the site, the game runs in preview mode (scores stay in the browser; `?lang=en` and `?player=Ali` test those cases).
 - Before every commit: `node scripts/check.mjs`.
@@ -28,27 +28,31 @@ This section is the same in all four templates (JS, Phaser, Three.js, Godot). Fo
 
 ### 2.1 How publishing really works
 
-Everything below is true for this repo's `.github/workflows/publish.yml` and the site's publish endpoint. Do not assume anything else.
+Everything below is true for the site's publishing code. Do not assume anything else.
 
-- A game is published from **its own GitHub repo** by the workflow **Yayınla / Publish**. It runs on every push to `main`, and can also be started by hand (**Actions → Yayınla / Publish → Run workflow**).
-- The steps are: **Check** (runs `node scripts/check.mjs`) on every run, anywhere. **Package** and **Publish** run only when **both** are true *at the moment the run starts*:
+- A game is published from **its own GitHub repo**. There is **no GitHub Actions workflow**: nothing runs on GitHub, and the repo needs no `.github/workflows` folder. Don't add one.
+- The `oyun-team` organization has the site's GitHub App installed on all its repos. On every push to `main`, GitHub tells the site, and the site downloads that commit, checks it (the same checks as `node scripts/check.mjs`) and publishes the folder that `game.json` → `dir` names.
+- The site publishes a push only when **both** are true:
   - the repo's owner is the `oyun-team` organization, and
-  - the run is on the `main` branch.
-- So a repo outside `oyun-team` shows a green check with **Package** and **Publish** greyed out as skipped. That is normal, and it is not a publish. It does **not** fix itself after the move: a new run is needed (see 2.6).
-- The whole job is skipped if the repo is ticked as a **Template repository** in Settings. Only the four template repos should be ticked, never a game.
-- The workflow proves who it is with a GitHub OIDC token, so there are **no secrets, passwords or tokens to set up**. Never ask for one, and never add one.
-- The site then checks again: the token must come from a repo owned by `oyun-team`, on `refs/heads/main`.
+  - the push is to the `main` branch.
+- So pushes made while a repo is still in a personal account do nothing. After the move, the next push to `main` publishes; nothing else needs starting (see 2.6).
+- A repo ticked as a **Template repository** in Settings never publishes. Only the four template repos should be ticked, never a game.
+- The result shows on GitHub next to the commit: a ✓ or ✗ named **oyun-team / yayın** (hover or click it to read the message). The site owner also sees every attempt on `/admin`.
+- There are **no secrets, passwords or tokens to set up** in a game repo. Never ask for one, and never add one.
 - The site ties a game's **slug** (from `game.json`) to the **full repo name** (`oyun-team/<repo-name>`) the first time it publishes. After that:
   - the same slug cannot be published from any other repo, and
   - that repo cannot switch to another slug.
 - The first release waits for the site owner to approve it on `/admin`. Every later push to `main` goes live by itself in about a minute.
+- The site keeps the first approved version as the game's backup. Later versions are not kept, so git history is the only record of them.
+- The site owner can also publish a game from a zip on `/admin` (route F) without any repo push.
 - Private and public repos publish the same way.
 
 ### 2.2 Rules for agents
 
 - Every game repo name must follow 2.9 (`<maker>-<game>`, for example `berfin_toprak-gece_lambasi`). This is strict.
 - **Ask the human before** transferring, renaming, deleting, archiving, changing visibility, or creating a repo. These are GitHub account actions that are hard to undo. Explain what will happen in one or two plain sentences; the human may not be a developer.
-- Never edit `.github/workflows/publish.yml`, `scripts/check.mjs` or the SDK files (`oyun-sdk.js`, and `oyun.gd` in Godot) to "make it pass". If they are missing or broken, copy them unchanged from the template (2.5, route G).
+- Never edit `scripts/check.mjs` or the SDK files (`oyun-sdk.js`, and `oyun.gd` in Godot) to "make it pass". If they are missing or broken, copy them unchanged from the template (2.5, route G).
+- Don't add a GitHub Actions workflow to a game repo. Publishing doesn't use one, and private repos would spend the organization's Actions minutes.
 - Never force-push or rewrite history on a repo inside `oyun-team`.
 - Never change `slug` in `game.json` after the game has published once.
 - Many AI tools cannot create or transfer repos in `oyun-team` (for example Claude's GitHub app gets a 403 there). If a call is refused, stop retrying and give the human the exact clicks from this file instead.
@@ -62,8 +66,8 @@ Run these in the game's folder and note the answers:
 git remote -v                      # where does the repo live now?
 git branch --show-current          # must end up as "main"
 git status                         # commit or stash local changes first
-node scripts/check.mjs             # must print "✓ <slug> hazır / ready" (Godot: see section 1)
-ls .github/workflows/publish.yml scripts/check.mjs game.json
+node scripts/check.mjs             # must print "✓ <slug> hazır / ready" (Godot: export first, see section 1)
+ls scripts/check.mjs game.json
 ```
 
 If the GitHub CLI is installed and signed in, this answers most questions at once:
@@ -72,7 +76,7 @@ If the GitHub CLI is installed and signed in, this answers most questions at onc
 gh repo view --json nameWithOwner,visibility,isFork,isTemplate,defaultBranchRef,parent
 ```
 
-Check that the repo name follows 2.9 (`<maker>-<game>`). Also check `game.json`: `slug` must be the game's own (not the template example), `author` must be a nickname (not `takma-adin`). `check.mjs` catches both.
+Check that the repo name follows 2.9 (`<maker>-<game>`). Also check `game.json`: `slug` must be the game's own (not the template example), `author` must be a nickname (not `takma-adin`). `check.mjs` catches both, and so does the site.
 
 ### 2.4 Pick the route
 
@@ -85,7 +89,7 @@ Check that the repo name follows 2.9 (`<maker>-<game>`). Also check `game.json`:
 | An `oyun-team` repo with the same name already exists | Rename first (2.7), then **A**, or use **C** with a new name |
 | Outside GitHub (GitLab, a folder on a computer with git history) | **C** |
 | Only files, no git, or nothing else works | **F** (zip) |
-| Not made from a template at all, or the workflow/check files are missing | **G** first, then any route |
+| Not made from a template at all, or the check files are missing | **G** first, then any route |
 
 ### 2.5 Routes
 
@@ -126,30 +130,27 @@ Use for forks, repos outside GitHub, name clashes, or when a transfer is not pos
    ```
 
 4. Push other branches only if the human wants them (`git push origin <branch>`). Only `main` publishes.
-5. This first push already runs the workflow inside `oyun-team`, so it publishes. Check it with 2.6 step 2.
+5. This first push to `main` inside `oyun-team` already publishes. Check it with 2.6 step 2.
 
 **D. The repo is already in `oyun-team`**
 
-Nothing needs moving. If it was created there with **Use this template**, the very first run fails at **Check** because `game.json` still has the template's example slug and author. That red X is expected. Fill in `game.json`, push to `main`, and continue with 2.6.
-
-If the repo was moved in earlier and its last run says Package/Publish **skipped**, that run happened before the move. Start a new run (2.6 step 1).
+Nothing needs moving. If it was created there with **Use this template**, the first push shows a ✗ because `game.json` still has the template's example slug and author. That is expected. Fill in `game.json`, push to `main`, and continue with 2.6.
 
 **E. It is a fork**
 
-Forks keep a link to the repo they were forked from, a fork of a public repo cannot be made private, and GitHub turns workflows off in forks until someone enables them. Don't move a fork as it is. Make a clean repo with route **C** (it keeps the commits but drops the fork link). If a fork is already inside `oyun-team` and must stay, open its **Actions** tab and click the button that enables workflows, then do 2.6.
+Forks keep a link to the repo they were forked from, and a fork of a public repo cannot be made private. Don't move a fork as it is. Make a clean repo with route **C** (it keeps the commits but drops the fork link).
 
-**F. Zip fallback (loses git history)**
+**F. Zip (no repo needed, loses git history)**
 
-Use only when nothing else works, or when the maker has no git history.
+Use when nothing else works, or when the maker has no git history. The site owner can publish a zip straight from the site.
 
-1. The maker makes the zip: on GitHub **Code → Download ZIP**, or zip their project folder. Leave out generated folders (see section 3) and `node_modules/`. The hidden `.github` folder must be inside (macOS Finder hides it; press Cmd+Shift+. to show hidden files).
-2. They send it to the site owner. The owner creates an empty repo as in route C step 1.
-3. On the owner's computer:
+1. The maker makes the zip: on GitHub **Code → Download ZIP**, or zip their project folder. It must contain `game.json` and the game folder that `game.json` → `dir` names (Godot: the web export, see section 1). Leave out `node_modules/`.
+2. They send it to the site owner, who opens `/admin` → **Publish a version** → **Upload zip**. A new game then waits for **Approve** like any other.
+3. To keep working on it with git later, the owner creates an empty repo as in route C step 1 and pushes the files:
 
    ```sh
    unzip game.zip -d <repo-name> && cd <repo-name>
    # GitHub's "Download ZIP" puts everything in one extra folder (<repo>-main/); move its contents up first
-   ls .github/workflows/publish.yml game.json scripts/check.mjs
    node scripts/check.mjs
    git init -b main
    git add -A
@@ -158,19 +159,22 @@ Use only when nothing else works, or when the maker has no git history.
    git push -u origin main
    ```
 
-4. GitHub's web upload (**Add file → Upload files**) also works for small games, but it rejects files over 25 MB and may skip the hidden `.github` folder. Check that `.github/workflows/publish.yml` exists afterwards.
+   If the game first came as a zip, its slug belongs to the upload, so the first push from the new repo fails with `slug "x" is already used by another game`. Ask the site owner to link the slug to the repo.
+
+4. GitHub's web upload (**Add file → Upload files**) also works for small games, but it rejects files over 25 MB.
 
 **G. The game was not made from a template, or files are missing**
 
-The repo needs these, copied unchanged from the matching template (the one named at the top of this file): `.github/workflows/publish.yml`, `scripts/check.mjs`, `game.json` (then filled in), `.gitignore`, and the SDK file(s) listed in section 1. The game itself must sit in the folder that `game.json` → `dir` names, with an `index.html` at its top level. Run `node scripts/check.mjs` until it passes, commit, then pick a route.
+The repo needs these, copied unchanged from the matching template (the one named at the top of this file): `scripts/check.mjs`, `game.json` (then filled in), `.gitignore`, and the SDK file(s) listed in section 1. The game itself must sit in the folder that `game.json` → `dir` names, with an `index.html` at its top level. Run `node scripts/check.mjs` until it passes, commit, then pick a route.
 
 ### 2.6 After the move: make it publish
 
-1. **Start a new run on `main`.** Either push any commit to `main`, or open **Actions → Yayınla / Publish → Run workflow**, pick branch `main`, and click **Run workflow**. Do not use "Re-run" on a run from before the move; start a new one.
-2. **Open the run.** All of **Check**, **Package** and **Publish** must be green, none skipped. The run's **Summary** shows the site's answer:
-   - `"status": "waiting for approval"`: it reached the site. Tell the human the site owner must approve it on `/admin`.
-   - `"status": "live"`: it is on the site at the `url` shown.
-   - Anything with `"ok": false`: see 2.8.
+1. **Push to `main`.** Any commit to `main` made after the move publishes. If there is nothing to change, ask the site owner to click **Publish from GitHub** on `/admin` with the repo's name.
+2. **Look at the result.** On GitHub, the commit on `main` gets a ✓ or ✗ named **oyun-team / yayın** within a minute (repo page → the mark next to the latest commit). Its message is the site's answer:
+   - `Yönetici onayı bekleniyor / waiting for approval`: it reached the site. Tell the human the site owner must approve it on `/admin`.
+   - `Yayında / live: <url>`: it is on the site at that address.
+   - A ✗ with an error: see 2.8.
+   - No mark at all after a few minutes: see 2.8.
 3. **Access.** Open **Settings → Collaborators and teams** and make sure the maker still has **Write** access, so they can keep improving the game. Add them if not.
 4. **Remotes.** On every computer that has a copy, point it at the new place (GitHub forwards old links after a transfer, but don't rely on it):
 
@@ -188,37 +192,33 @@ The repo needs these, copied unchanged from the matching template (the one named
 
 - **Branch is `master` or something else.** Only `main` publishes. On GitHub: **Settings → General → Default branch**, click the pencil and rename it to `main`. Then locally: `git branch -m master main && git fetch origin && git branch -u origin/main main && git remote set-head origin -a`.
 - **Repo name vs slug.** The repo name must follow 2.9 (`<maker>-<game>`); the game's address is `/oyun/<slug>` from `game.json`. They differ on purpose: `berfin_toprak-gece_lambasi` publishes the slug `gece-lambasi`.
-- **Renaming the repo.** Before the first publish: fine, any time. **After** the first publish: don't. The site remembers the old full name, so the next run fails with `slug "x" is already used by another game`. To fix: rename it back, or ask the site owner to update the stored repo name.
+- **Renaming the repo.** Before the first publish: fine, any time. **After** the first publish: don't. The site remembers the old full name, so the next push fails with `slug "x" is already used by another game`. To fix: rename it back, or ask the site owner to update the stored repo name.
 - **Changing the slug.** Before the first publish: fine. After: refused with `this repo already published as "x"`. Put the old slug back, or ask the site owner.
 - **Same game in two repos.** Only the first one to publish owns the slug. Pick one repo and push only there.
 - **Name clash in `oyun-team`.** A transfer fails if `oyun-team` already has a repo with that name. Rename the repo first (allowed, if it has never published), or use route C with a new name.
-- **Private or public.** Both publish. Private is the default for games; public is fine too. Visibility can change later without affecting publishing. Private repos use the organization's monthly GitHub Actions minutes (public repos don't). If those run out, runs fail with a billing message until the next month or until the repo is made public; tell the human.
-- **Actions disabled.** If the **Actions** tab shows a button to enable workflows, click it (needs admin on the repo). If **Yayınla / Publish** itself is marked disabled, open it, click **...** and **Enable workflow**. If runs never start at all, check **Settings → Actions → General**: it must allow actions, including GitHub's own `actions/checkout` and `actions/cache`. Organization-wide Actions settings can only be changed by an `oyun-team` owner.
-- **Large files.** GitHub refuses any single file over 100 MB and warns above 50 MB. The site refuses a game folder over 60 MB. Don't use **Git LFS**: the workflow does not download LFS files, so the site would get placeholder text files instead of images and sounds. Shrink assets instead (compress images, `.ogg` or `.mp3` audio). If a huge file is already in the history, ask the human before rewriting history; it's usually simpler to delete it, commit, and use route C, F or a fresh start.
+- **Private or public.** Both publish, and neither uses GitHub Actions minutes. Private is the default for games; public is fine too. Visibility can change later without affecting publishing.
+- **An old workflow file.** Games made before publishing moved to the site may still have `.github/workflows/publish.yml`. Delete that file (it spends Actions minutes and is no longer needed); publishing keeps working.
+- **Large files.** GitHub refuses any single file over 100 MB and warns above 50 MB. The site refuses a game folder over 60 MB, and a whole repo download over 200 MB. Don't use **Git LFS**: the site's download does not include LFS files, so it would get placeholder text files instead of images and sounds. Shrink assets instead (compress images, `.ogg` or `.mp3` audio). If a huge file is already in the history, ask the human before rewriting history; it's usually simpler to delete it, commit, and use route C, F or a fresh start.
 - **Hidden files.** Files and folders starting with `.` inside the game folder are left out of the published game. Don't put assets there.
 - **Upper/lower case.** The site runs on Linux, where `Player.png` and `player.png` are different files. A game that works on Windows or macOS can miss images on the site. Make every file path in the code match the real file name exactly.
-- **Several runs at once.** A new push to `main` cancels a run still in progress. A greyed "cancelled" run is normal; the newest run is the one that counts.
+- **Several pushes at once.** The site publishes one at a time; a repo pushed again while waiting is published once, at its newest commit.
 - **Working with others.** One game is one repo. Teammates are added as collaborators, not as separate copies.
-- **The template flag.** A game made with **Use this template** is not a template. If **Settings → General → Template repository** is ticked on a game, untick it, or nothing will run.
+- **The template flag.** A game made with **Use this template** is not a template. If **Settings → General → Template repository** is ticked on a game, untick it, or it never publishes.
 
-### 2.8 Reading a failed or skipped run
+### 2.8 Reading a failed or missing result
 
 | What you see | Cause | Fix |
 |---|---|---|
-| No run at all after a push | Pushed to a branch that isn't `main`, the workflow file is missing, or Actions is off | 2.7 branch, route G, 2.7 Actions |
-| Whole job grey, "skipped" | Repo is ticked as a Template repository | Untick it (2.7) |
-| Check green, Package and Publish skipped | Run started while the repo was outside `oyun-team`, or not on `main` | Move it, then start a new run (2.6) |
-| Check fails: `change the example slug to your own` / `put your own nickname` | `game.json` still has the template's example values | Fill in `game.json` |
-| Check fails: `index.html bulunamadı / not found` | No `index.html` at the top of the game folder | See section 1 for this template's game folder |
-| Check fails: `larger than 60 MB` | Game folder too big | Shrink assets (2.7 large files) |
-| Publish: `repository must belong to oyun-team` | Ran outside the organization | Move it (2.4) |
-| Publish: `only pushes to main can publish` | Ran on another branch | Merge into `main` |
-| Publish: `slug "x" is already used by another game` | Another repo owns this slug, or this repo was renamed after publishing | New slug if never published; otherwise 2.7 renaming |
-| Publish: `this repo already published as "x"` | The slug in `game.json` changed after the first publish | Put the old slug back |
-| Publish: `game is too large` | Over the site's limit | Shrink assets |
-| Publish: `index.html is missing from the zip root` / `thumbnail ... is not in the game folder` | Wrong folder layout or thumbnail path | Fix `game.json` `dir` / `thumbnail` |
-| Publish: `invalid token`, connection errors, 5xx | The site is down or busy | Wait, then **Run workflow** again; if it keeps failing, tell the site owner |
-| `"status": "waiting for approval"` for a long time | Normal for a first release | The site owner approves it on `/admin` |
+| No ✓ or ✗ after a push | Pushed to a branch that isn't `main`, the repo is not in `oyun-team` yet, it is ticked as a Template repository, or the site was busy | 2.7 branch, move it (2.4), 2.7 template flag; else ask the site owner to click **Publish again** on `/admin` |
+| ✗ `slug: change the example slug to your own` / `author: put your own nickname` | `game.json` still has the template's example values | Fill in `game.json` |
+| ✗ `game/index.html is missing` (or `build/...` in Godot) | No `index.html` at the top of the game folder | See section 1 for this template's game folder |
+| ✗ `game.json is missing` | `game.json` is not at the top of the repo | Move it there |
+| ✗ `game is larger than 60 MB` / `repo is larger than 200 MB` | Game folder or repo too big | Shrink assets (2.7 large files) |
+| ✗ `slug "x" is already used by another game` | Another repo owns this slug, or this repo was renamed after publishing | New slug if never published; otherwise 2.7 renaming |
+| ✗ `this repo already published as "x"` | The slug in `game.json` changed after the first publish | Put the old slug back |
+| ✗ `thumbnail ... is not in the game folder` | Wrong thumbnail path | Fix `game.json` `thumbnail` |
+| ✗ `the site's GitHub App is not installed on ...` / `GitHub said ...` / `server error` | The site's GitHub setup or the site itself | Tell the site owner |
+| ✓ `waiting for approval` for a long time | Normal for a first release | The site owner approves it on `/admin` |
 
 ### 2.9 Repo name: a strict rule
 
