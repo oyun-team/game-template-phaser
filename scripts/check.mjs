@@ -3,7 +3,9 @@
 import { readFileSync, existsSync, statSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const CATEGORIES = ["arcade", "puzzle", "action", "strategy", "sports", "racing", "board", "other"];
+const CATEGORIES = ["arcade", "puzzle", "action", "adventure", "strategy", "sports", "racing", "board", "educational", "other"];
+const AGES = [3, 7, 12, 16, 18];
+const SKILLS = ["reflexes", "focus", "coordination", "timing", "logic", "strategy", "planning", "spatial", "memory", "patience"];
 const MAX_MB = 60;
 const errors = [];
 const fail = (msg) => errors.push(msg);
@@ -26,6 +28,16 @@ if (!game.author || game.author.length > 40) fail("author gerekli, en fazla 40 k
 if (game.author === "takma-adin") fail('author: "takma-adin" yerine kendi takma adını yaz / put your own nickname');
 if (!CATEGORIES.includes(game.category ?? "other")) fail(`category: ${CATEGORIES.join(", ")}`);
 if (!["portrait", "landscape", "any"].includes(game.orientation ?? "any")) fail("orientation: portrait, landscape, any");
+if (game.age !== undefined && !AGES.includes(game.age)) fail(`age: ${AGES.join(", ")} (önerilen en küçük yaş / recommended minimum age)`);
+for (const field of ["audience", "benefits"]) {
+  const v = game[field];
+  if (v === undefined) continue;
+  if (!v || typeof v !== "object" || Array.isArray(v)) fail(`${field}: { "tr": "...", "en": "..." }`);
+  else for (const l of ["tr", "en"]) if (v[l] !== undefined && (typeof v[l] !== "string" || v[l].length > 300)) fail(`${field}.${l}: en fazla 300 karakter / max 300 chars`);
+}
+if (game.skills !== undefined && !(Array.isArray(game.skills) && game.skills.length <= 4 && new Set(game.skills).size === game.skills.length && game.skills.every((s) => SKILLS.includes(s)))) {
+  fail(`skills: en fazla 4, tekrarsız / up to 4, no repeats: ${SKILLS.join(", ")}`);
+}
 if (game.languages && !(Array.isArray(game.languages) && game.languages.length && game.languages.every((l) => l === "tr" || l === "en"))) {
   fail('languages: ["tr"], ["en"] veya / or ["tr", "en"]');
 }
