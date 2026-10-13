@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 const CATEGORIES = ["arcade", "puzzle", "action", "adventure", "strategy", "sports", "racing", "board", "educational", "other"];
 const AGES = [3, 7, 12, 16, 18];
-const SKILLS = ["reflexes", "focus", "coordination", "timing", "logic", "strategy", "planning", "spatial", "memory", "patience"];
+const SKILLS = ["focus", "reflexes", "timing", "rhythm", "coordination", "spatial", "memory", "planning", "strategy", "logic", "patience"];
 const MAX_MB = 60;
 const errors = [];
 const fail = (msg) => errors.push(msg);
