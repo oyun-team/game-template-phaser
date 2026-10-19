@@ -22,6 +22,7 @@
   var pauseFns = [];
   var resumeFns = [];
   var samples = []; // measures not yet sent to the site
+  var flushTimer = null;
   var sent = 0;
   var MAX_SAMPLES = 1000; // per page load: enough for any real session, stops a loop from flooding
   var previewMeasures = {};
@@ -38,8 +39,11 @@
   }
 
   // Measures go to the site in small batches: when a score is sent, when the game is paused or
-  // left, and every 20 tries. The site needs no answer, so a game never waits for this.
+  // left, every 20 tries, and a few seconds after the last try (for games without scores).
+  // The site needs no answer, so a game never waits for this.
   function flush() {
+    if (flushTimer) clearTimeout(flushTimer);
+    flushTimer = null;
     if (!samples.length) return;
     if (inFrame) post({ type: "measure", samples: samples });
     samples = [];
@@ -156,6 +160,7 @@
       if (inFrame) {
         samples.push(sample);
         if (samples.length >= 20) flush();
+        else if (!flushTimer) flushTimer = setTimeout(flush, 3000);
       } else {
         (previewMeasures[id] = previewMeasures[id] || []).push(sample.value);
         console.debug("[OyunSDK] measure", sample);
