@@ -240,3 +240,19 @@ Every game repo is named **`<maker>-<game>`**, so anyone can see who made which 
 - For a zip (route F), include `game/` (with `assets/` and `phaser.min.js`), `game.json`, `scripts/`, `.github/`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`. Leave out `node_modules/` and `game.zip`.
 - Big sprite sheets and music are the usual reason for the 60 MB limit; compress them before moving.
 - The publish run takes well under a minute.
+
+## 4. Measuring progress for parents
+
+This section is the same in all four templates. The site shows parents how a child improves in a game over time, compared only with the child's own earlier play, never with other children. A score can't show that (it mixes luck and difficulty), so each game reports **measures**. The example game shows a complete version.
+
+- **Declare** 1 to 3 in `game.json` → `measures`: `{ "id", "skill", "unit", "better", "label": { "tr", "en" } }`.
+  - `id`: lowercase letters, digits and `_`, 2 to 31 characters (for example `reaction_ms`).
+  - `skill`: one of the game's own `skills`.
+  - `unit`: `ms`, `percent` (0 to 100), `count` or `level`. `better`: `lower` or `higher`.
+  - `label.tr` is required (max 40 characters); `label.en` is optional.
+  - `scripts/check.mjs` validates this. A game without `measures` still passes, with a warning: its parents see play time only.
+- **Report** one try at a time: `OyunSDK.measure(id, value, level)` in JavaScript, `Oyun.measure(id, value, level)` in Godot. `value` is a number >= 0. Pass `level` (an integer from 1) only when the difficulty changes; tries are compared only within the same level. The SDK sends tries in batches when a score is submitted, the game is paused or the page is left, so it never slows the game down. In preview mode tries are logged to the console and summarised in the score message.
+- **Good measures** are one action the child controls: reaction time to a target, the share of targets hit, mistakes in a sequence, the longest sequence remembered. Bad ones: the score, time survived, anything decided by chance.
+- Keep a game clock that only runs while playing. Don't measure during a tutorial or in rounds too short to mean anything.
+- Measure only play. Never collect anything else about the child (no camera, microphone, location or typed text).
+- Texts in the game and in `game.json` say what the game practises, never that it improves a skill outside the game (not "improves attention").

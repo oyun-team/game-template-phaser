@@ -21,5 +21,9 @@
     "en": "Practises hand-eye coordination and focus."
   },
   "skills": ["coordination", "focus", "reflexes"],
+  "measures": [
+    { "id": "star_catch", "skill": "coordination", "unit": "percent", "better": "higher", "label": { "tr": "Yakalanan yıldız", "en": "Stars caught" } },
+    { "id": "bomb_avoid", "skill": "focus", "unit": "percent", "better": "higher", "label": { "tr": "Kaçılan bomba", "en": "Bombs dodged" } }
+  ],
   "dir": "game"
 }

@@ -75,6 +75,9 @@ class PlayScene extends Phaser.Scene {
     this.items.clear(true, true);
     this.score = 0;
     this.lives = 3;
+    // For the parent's progress view (game.json "measures"): what happened to each star and bomb.
+    this.stars = { caught: 0, missed: 0 };
+    this.bombs = { hit: 0, avoided: 0 };
     this.state = "playing";
     this.message.setText("");
     this.updateHud();
@@ -95,10 +98,12 @@ class PlayScene extends Phaser.Scene {
     if (this.state !== "playing") return;
     item.destroy();
     if (item.isBomb) {
+      this.bombs.hit++;
       this.lives--;
       this.cameras.main.shake(150, 0.01);
       if (this.lives <= 0) this.endRound();
     } else {
+      this.stars.caught++;
       this.score++;
     }
     this.updateHud();
@@ -108,6 +113,11 @@ class PlayScene extends Phaser.Scene {
     this.state = "over";
     this.spawner.remove();
     this.items.setVelocityY(0);
+    // Measures: one try = one round. Very short rounds say little, so they are skipped.
+    const stars = this.stars.caught + this.stars.missed;
+    const bombs = this.bombs.hit + this.bombs.avoided;
+    if (stars >= 5) OyunSDK.measure("star_catch", (this.stars.caught / stars) * 100);
+    if (bombs >= 3) OyunSDK.measure("bomb_avoid", (this.bombs.avoided / bombs) * 100);
     this.message.setText(`${t.over}\n${t.score}: ${this.score}\n\n${t.again}`);
     try {
       const result = await OyunSDK.submitScore(this.score);
@@ -125,7 +135,13 @@ class PlayScene extends Phaser.Scene {
   update() {
     // Remove things that fell off the bottom of the screen.
     for (const item of this.items.getChildren().slice()) {
-      if (item.y > this.scale.height + 40) item.destroy();
+      if (item.y > this.scale.height + 40) {
+        if (this.state === "playing") {
+          if (item.isBomb) this.bombs.avoided++;
+          else this.stars.missed++;
+        }
+        item.destroy();
+      }
     }
   }
 }

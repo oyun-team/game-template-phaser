@@ -6,8 +6,11 @@ import { join } from "node:path";
 const CATEGORIES = ["arcade", "puzzle", "action", "adventure", "strategy", "sports", "racing", "board", "educational", "other"];
 const AGES = [3, 7, 12, 16, 18];
 const SKILLS = ["focus", "reflexes", "timing", "rhythm", "coordination", "spatial", "memory", "planning", "strategy", "logic", "patience"];
+const UNITS = ["ms", "percent", "count", "level"];
+const MAX_MEASURES = 3;
 const MAX_MB = 60;
 const errors = [];
+const warnings = [];
 const fail = (msg) => errors.push(msg);
 
 let game;
@@ -38,6 +41,27 @@ for (const field of ["audience", "benefits"]) {
 if (game.skills !== undefined && !(Array.isArray(game.skills) && game.skills.length <= 4 && new Set(game.skills).size === game.skills.length && game.skills.every((s) => SKILLS.includes(s)))) {
   fail(`skills: en fazla 4, tekrarsız / up to 4, no repeats: ${SKILLS.join(", ")}`);
 }
+// measures: what the game measures for the parent's progress view (see README, "Measuring").
+if (game.measures === undefined) {
+  warnings.push('measures: yok; aile sayfası sadece oyun süresini gösterir / none; parents will only see play time (README "Ölçüm / Measuring")');
+} else if (!Array.isArray(game.measures) || game.measures.length < 1 || game.measures.length > MAX_MEASURES) {
+  fail(`measures: 1-${MAX_MEASURES} ölçüm listesi / a list of 1-${MAX_MEASURES} measures`);
+} else {
+  const ids = new Set();
+  game.measures.forEach((m, i) => {
+    const at = `measures[${i}]`;
+    if (!m || typeof m !== "object") return fail(`${at}: { "id", "skill", "unit", "better", "label" }`);
+    if (!/^[a-z][a-z0-9_]{1,30}$/.test(m.id ?? "")) fail(`${at}.id: küçük harf, rakam, _ / lowercase letters, digits, _ (örn. "reaction_ms")`);
+    else if (ids.has(m.id)) fail(`${at}.id: "${m.id}" iki kez var / used twice`);
+    ids.add(m.id);
+    if (!SKILLS.includes(m.skill)) fail(`${at}.skill: ${SKILLS.join(", ")}`);
+    else if (Array.isArray(game.skills) && !game.skills.includes(m.skill)) fail(`${at}.skill: "${m.skill}" skills listesinde de olmalı / must also be in skills`);
+    if (!UNITS.includes(m.unit)) fail(`${at}.unit: ${UNITS.join(", ")}`);
+    if (!["higher", "lower"].includes(m.better)) fail(`${at}.better: "higher" veya / or "lower"`);
+    if (!m.label?.tr || m.label.tr.length > 40) fail(`${at}.label.tr gerekli, en fazla 40 karakter / required, max 40 chars`);
+    if (m.label?.en && m.label.en.length > 40) fail(`${at}.label.en en fazla 40 karakter / max 40 chars`);
+  });
+}
 if (game.languages && !(Array.isArray(game.languages) && game.languages.length && game.languages.every((l) => l === "tr" || l === "en"))) {
   fail('languages: ["tr"], ["en"] veya / or ["tr", "en"]');
 }
@@ -58,4 +82,5 @@ if (errors.length) {
   errors.forEach((e) => console.error("  - " + e));
   process.exit(1);
 }
+warnings.forEach((w) => console.warn("! " + w));
 console.log(`✓ ${game.slug} hazır / ready (${dir}/)`);
