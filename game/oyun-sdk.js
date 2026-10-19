@@ -5,6 +5,7 @@
  *   OyunSDK.getLanguage()        -> "tr" | "en"
  *   OyunSDK.getPlayer()          -> Promise<{ nickname } | null>   (null = not signed in)
  *   OyunSDK.submitScore(number)  -> Promise<{ saved, best }>
+ *   OyunSDK.measure(id, value, level?) -> records one try of a measure listed in game.json "measures"
  *   OyunSDK.onPause(fn) / OyunSDK.onResume(fn)
  *   OyunSDK.mode                 -> "platform" (on the site) | "preview" (opened directly)
  */
@@ -20,6 +21,10 @@
   var nextId = 1;
   var pauseFns = [];
   var resumeFns = [];
+  var samples = []; // measures not yet sent to the site
+  var sent = 0;
+  var MAX_SAMPLES = 1000; // per page load: enough for any real session, stops a loop from flooding
+  var previewMeasures = {};
 
   function emit(list) {
     list.forEach(function (fn) {
@@ -30,6 +35,20 @@
   function post(message) {
     message.oyun = VERSION;
     window.parent.postMessage(message, "*");
+  }
+
+  // Measures go to the site in small batches: when a score is sent, when the game is paused or
+  // left, and every 20 tries. The site needs no answer, so a game never waits for this.
+  function flush() {
+    if (!samples.length) return;
+    if (inFrame) post({ type: "measure", samples: samples });
+    samples = [];
+  }
+
+  function median(list) {
+    var s = list.slice().sort(function (a, b) { return a - b; });
+    var m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
 
   function request(type, extra) {
@@ -62,11 +81,13 @@
         if (msg.error) p.reject(new Error(msg.error));
         else p.resolve(msg.result);
       } else if (msg.type === "pause") {
+        flush();
         emit(pauseFns);
       } else if (msg.type === "resume") {
         emit(resumeFns);
       }
     });
+    window.addEventListener("pagehide", flush);
     post({ type: "ready" });
   } else {
     // Preview mode: the game was opened directly (for example with a local server).
@@ -99,6 +120,7 @@
     submitScore: function (score) {
       score = Math.floor(Number(score));
       if (!isFinite(score) || score < 0) return Promise.reject(new Error("OyunSDK: score must be a number >= 0"));
+      flush();
       if (inFrame) return request("score", { score: score });
       var best = 0;
       try { best = Number(localStorage.getItem("oyun-preview-best") || 0); } catch (e) {}
@@ -106,8 +128,38 @@
         best = score;
         try { localStorage.setItem("oyun-preview-best", String(best)); } catch (e) {}
       }
-      toast("Önizleme / preview: " + score + " (en iyi / best " + best + ")");
+      var lines = Object.keys(previewMeasures).map(function (id) {
+        var list = previewMeasures[id];
+        return id + " ~" + Math.round(median(list) * 10) / 10 + " (" + list.length + ")";
+      });
+      toast("Önizleme / preview: " + score + " (en iyi / best " + best + ")" + (lines.length ? " · " + lines.join(", ") : ""));
       return Promise.resolve({ saved: false, best: best });
+    },
+    // One try of something the game measures, for example one reaction time in ms. The id must be
+    // listed in game.json "measures". level: the difficulty the try was played at (1, 2, 3...),
+    // so the site only compares tries of the same difficulty. Leave it out if difficulty is fixed.
+    measure: function (id, value, level) {
+      value = Number(value);
+      if (typeof id !== "string" || !/^[a-z][a-z0-9_]{1,30}$/.test(id)) {
+        console.warn("OyunSDK.measure: id must be lowercase letters, digits or _ (" + id + ")");
+        return;
+      }
+      if (!isFinite(value) || value < 0) {
+        console.warn("OyunSDK.measure: value must be a number >= 0 (" + id + ")");
+        return;
+      }
+      if (sent >= MAX_SAMPLES) return;
+      sent++;
+      var sample = { id: id, value: Math.round(value * 1000) / 1000, at: Date.now() };
+      level = Math.floor(Number(level));
+      if (isFinite(level) && level >= 1) sample.level = level;
+      if (inFrame) {
+        samples.push(sample);
+        if (samples.length >= 20) flush();
+      } else {
+        (previewMeasures[id] = previewMeasures[id] || []).push(sample.value);
+        console.debug("[OyunSDK] measure", sample);
+      }
     },
     onPause: function (fn) { pauseFns.push(fn); },
     onResume: function (fn) { resumeFns.push(fn); },
