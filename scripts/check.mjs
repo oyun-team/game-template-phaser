@@ -7,6 +7,22 @@ const CATEGORIES = ["arcade", "puzzle", "action", "adventure", "strategy", "spor
 const AGES = [3, 7, 12, 16, 18];
 const SKILLS = ["focus", "reflexes", "timing", "rhythm", "coordination", "spatial", "memory", "planning", "strategy", "logic", "patience"];
 const UNITS = ["ms", "percent", "count", "level"];
+// The measure catalog (MEASURING.md): a catalog id means the same in every game. [skill, unit, better]
+const CATALOG = {
+  reaction_ms: ["reflexes", "ms", "lower"],
+  hit_rate: ["focus", "percent", "higher"],
+  avoid_rate: ["focus", "percent", "higher"],
+  tap_accuracy: ["coordination", "percent", "higher"],
+  catch_rate: ["coordination", "percent", "higher"],
+  timing_accuracy: ["timing", "percent", "higher"],
+  beat_error_ms: ["rhythm", "ms", "lower"],
+  placement_accuracy: ["spatial", "percent", "higher"],
+  memory_span: ["memory", "count", "higher"],
+  extra_moves: ["planning", "count", "lower"],
+  win_rate: ["strategy", "percent", "higher"],
+  solve_ms: ["logic", "ms", "lower"],
+  early_actions: ["patience", "count", "lower"],
+};
 const MAX_MEASURES = 3;
 const MAX_MB = 60;
 const errors = [];
@@ -43,7 +59,7 @@ if (game.skills !== undefined && !(Array.isArray(game.skills) && game.skills.len
 }
 // measures: what the game measures for the parent's progress view (see README, "Measuring").
 if (game.measures === undefined) {
-  warnings.push('measures: yok; aile sayfası sadece oyun süresini gösterir / none; parents will only see play time (README "Ölçüm / Measuring")');
+  warnings.push('measures: yok; aile sayfası sadece oyun süresini gösterir / none; parents will only see play time (MEASURING.md)');
 } else if (!Array.isArray(game.measures) || game.measures.length < 1 || game.measures.length > MAX_MEASURES) {
   fail(`measures: 1-${MAX_MEASURES} ölçüm listesi / a list of 1-${MAX_MEASURES} measures`);
 } else {
@@ -59,6 +75,12 @@ if (game.measures === undefined) {
     if (!UNITS.includes(m.unit)) fail(`${at}.unit: ${UNITS.join(", ")}`);
     if (!["higher", "lower"].includes(m.better)) fail(`${at}.better: "higher" veya / or "lower"`);
     if (!m.label?.tr || m.label.tr.length > 40) fail(`${at}.label.tr gerekli, en fazla 40 karakter / required, max 40 chars`);
+    const known = CATALOG[m.id];
+    if (known && (m.skill !== known[0] || m.unit !== known[1] || m.better !== known[2])) {
+      fail(`${at}: "${m.id}" katalogda / is in the catalog: "skill": "${known[0]}", "unit": "${known[1]}", "better": "${known[2]}" (MEASURING.md)`);
+    } else if (!known && ids.size && /^[a-z]/.test(m.id ?? "")) {
+      warnings.push(`${at}.id: "${m.id}" katalogda yok; sadece bu oyunun grafiğinde görünür / not in the catalog; shown only on this game's own chart (MEASURING.md)`);
+    }
     if (m.label?.en && m.label.en.length > 40) fail(`${at}.label.en en fazla 40 karakter / max 40 chars`);
   });
 }
