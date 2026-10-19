@@ -116,8 +116,8 @@ class PlayScene extends Phaser.Scene {
     // Measures: one try = one round. Very short rounds say little, so they are skipped.
     const stars = this.stars.caught + this.stars.missed;
     const bombs = this.bombs.hit + this.bombs.avoided;
-    if (stars >= 5) OyunSDK.measure("star_catch", (this.stars.caught / stars) * 100);
-    if (bombs >= 3) OyunSDK.measure("bomb_avoid", (this.bombs.avoided / bombs) * 100);
+    if (stars >= 5) OyunSDK.measure("catch_rate", (this.stars.caught / stars) * 100);
+    if (bombs >= 3) OyunSDK.measure("avoid_rate", (this.bombs.avoided / bombs) * 100);
     this.message.setText(`${t.over}\n${t.score}: ${this.score}\n\n${t.again}`);
     try {
       const result = await OyunSDK.submitScore(this.score);

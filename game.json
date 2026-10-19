@@ -22,8 +22,8 @@
   },
   "skills": ["coordination", "focus", "reflexes"],
   "measures": [
-    { "id": "star_catch", "skill": "coordination", "unit": "percent", "better": "higher", "label": { "tr": "Yakalanan yıldız", "en": "Stars caught" } },
-    { "id": "bomb_avoid", "skill": "focus", "unit": "percent", "better": "higher", "label": { "tr": "Kaçılan bomba", "en": "Bombs dodged" } }
+    { "id": "catch_rate", "skill": "coordination", "unit": "percent", "better": "higher", "label": { "tr": "Yakalanan yıldız", "en": "Stars caught" } },
+    { "id": "avoid_rate", "skill": "focus", "unit": "percent", "better": "higher", "label": { "tr": "Kaçılan bomba", "en": "Bombs dodged" } }
   ],
   "dir": "game"
 }
