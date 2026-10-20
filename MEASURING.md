@@ -41,12 +41,15 @@ Katalogdaki ölçümler bütün oyunlarda aynı anlama gelir. Böylece site, ör
 | `avoid_rate` | `focus` | `percent` | `higher` | Bir turda dokunulmaması gereken şeylerden (bomba, kaya) uzak durulanların yüzdesi | Yıldız Yakala, Uzay Yolu |
 | `tap_accuracy` | `coordination` | `percent` | `higher` | Bir turda bir hedefe isabet eden dokunuşların yüzdesi | Balon Patlat |
 | `catch_rate` | `coordination` | `percent` | `higher` | Bir turda ya da bölümde yakalanan hareketli şeylerin yüzdesi | Yıldız Yakala, Tuğla Kır |
+| `lives_lost` | `coordination` | `count` | `lower` | Bir bölüm oynanırken kaybedilen can (çarpma, düşme, düşmana değme), bölüm bitene ya da oyun bitene kadar | Tilki Macerası |
 | `timing_accuracy` | `timing` | `percent` | `higher` | Doğru ana ya da yere ne kadar yakın: 100 tam zamanında, 0 ıskaladı | Flappy Kuş |
 | `beat_error_ms` | `rhythm` | `ms` | `lower` | Bir dokunuşun müziğin vuruşundan kaç milisaniye uzak olduğu | (ritim oyunları) |
 | `placement_accuracy` | `spatial` | `percent` | `higher` | Bir parçanın hedef yere ne kadar oturduğu: 100 tam üstüne | Kule |
 | `memory_span` | `memory` | `count` | `higher` | Bir turda doğru hatırlanan en uzun dizi (öğe sayısı) | (hafıza oyunları) |
 | `extra_moves` | `planning` | `count` | `lower` | Bir bulmacada en az hamleden fazla yapılan hamle sayısı | (bulmacalar) |
+| `retries` | `planning` | `count` | `lower` | Bir bulmaca ya da bölüm çözülene kadar başarısız biten deneme sayısı | Gece Lambası |
 | `win_rate` | `strategy` | `percent` | `higher` | Bilgisayara karşı bir oyun: kazanınca 100, berabere 50, kaybedince 0 | Pentago |
+| `blunders` | `strategy` | `count` | `lower` | Bilgisayara karşı bir oyunda yapılan hata: tek hamlede kazanmayı kaçırmak ya da önlenebilecekken rakibe tek hamlede kazanma fırsatı bırakmak | Pentago |
 | `solve_ms` | `logic` | `ms` | `lower` | Bir bulmacanın çözülme süresi | (bulmacalar) |
 | `early_actions` | `patience` | `count` | `lower` | Bir turda doğru an gelmeden yapılan acele hareket sayısı | (bekleme oyunları) |
 
@@ -81,6 +84,8 @@ Site bu bilgileri aile sayfasında şöyle kullanacak:
 6. **Bir deneme, bir çağrı.** Aynı denemeyi iki kez gönderme. Bir turu ölçüyorsan tur bitince bir kez çağır.
 7. **Görünmeden saymaya başlama.** Tepki süresi, hedef ekranda **tamamen** göründüğü anda başlar.
 8. **Küçük çocukları düşün.** Hedefler büyük olsun; ölçüm, ekranın küçüklüğünü değil çocuğun becerisini ölçsün.
+9. **Başarısız denemeleri de say.** Bir deneme başarısız olabiliyorsa (çarpma, kaybetme, ıskalama) sadece başarılı olanları gönderme. Iskalanan bir hedef 0 puandır; kaybedilen bir bölümün hataları da sayılır. Yoksa çocuk olduğundan iyi görünür.
+10. **Hatayı da ölç.** Doğruluk ya da hız yanında, oyunda hata yapılabiliyorsa bir hata sayısı da düşün (`lives_lost`, `blunders`, `retries`, `extra_moves`, `early_actions`). Sayı ölçümlerini (`count`) hep aynı büyüklükte bir parça için gönder: bir bölüm, bir oyun ya da bir bulmaca. Bölümler birbirinden farklıysa seviyeyi de gönder.
 
 ## Yasaklar
 
@@ -166,12 +171,15 @@ Catalog measures mean the same thing in every game, so the site can, for example
 | `avoid_rate` | `focus` | `percent` | `higher` | Share of "don't touch" things (bombs, rocks) left alone in a round | Catch the Stars, Space Road |
 | `tap_accuracy` | `coordination` | `percent` | `higher` | Share of taps in a round that landed on a target | Pop the Balloons |
 | `catch_rate` | `coordination` | `percent` | `higher` | Share of moving things caught in a round or level | Catch the Stars, Brick Breaker |
+| `lives_lost` | `coordination` | `count` | `lower` | Lives lost while playing one level (a crash, a fall, touching an enemy), until the level is cleared or the game ends | Fox Adventure |
 | `timing_accuracy` | `timing` | `percent` | `higher` | How close to the right moment or spot: 100 exactly on time, 0 a miss | Flappy Bird |
 | `beat_error_ms` | `rhythm` | `ms` | `lower` | How many ms a tap was off the music's beat | (rhythm games) |
 | `placement_accuracy` | `spatial` | `percent` | `higher` | How well a piece landed on its target: 100 exactly on top | Tower |
 | `memory_span` | `memory` | `count` | `higher` | Longest sequence recalled correctly in a round (number of items) | (memory games) |
 | `extra_moves` | `planning` | `count` | `lower` | Moves beyond the fewest needed to solve a puzzle | (puzzles) |
+| `retries` | `planning` | `count` | `lower` | Failed tries before a puzzle or level was solved | Night Lamp |
 | `win_rate` | `strategy` | `percent` | `higher` | One game against the computer: 100 for a win, 50 for a draw, 0 for a loss | Pentago |
+| `blunders` | `strategy` | `count` | `lower` | Mistakes in one game against the computer: missing a win in one move, or leaving the opponent a win in one move when it could be avoided | Pentago |
 | `solve_ms` | `logic` | `ms` | `lower` | Time to solve one puzzle | (puzzles) |
 | `early_actions` | `patience` | `count` | `lower` | Hasty actions in a round before the right moment came | (waiting games) |
 
@@ -206,6 +214,8 @@ The site will use this data on the family page like this:
 6. **One try, one call.** Don't send the same try twice. If you measure a round, call once when it ends.
 7. **Start timing when it is visible.** Reaction time starts when the target is **fully** on screen.
 8. **Think of small children.** Keep targets big, so the measure shows the child's skill, not how small the screen is.
+9. **Count the failures too.** If a try can fail (a crash, a loss, a miss), don't send only the successful ones. A missed target scores 0, and a lost level's mistakes still count. Otherwise the child looks better than they are.
+10. **Measure mistakes as well.** Next to accuracy or speed, if a game has mistakes, consider a mistake count too (`lives_lost`, `blunders`, `retries`, `extra_moves`, `early_actions`). Send `count` measures for a unit of the same size every time: one level, one game or one puzzle. If levels differ, send the level too.
 
 ## Never
 
